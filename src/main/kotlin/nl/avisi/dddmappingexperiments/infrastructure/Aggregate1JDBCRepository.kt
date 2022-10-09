@@ -2,7 +2,6 @@ package nl.avisi.dddmappingexperiments.infrastructure
 
 import nl.avisi.dddmappingexperiments.domain.aggregate1.*
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.query
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 import java.util.*
@@ -18,16 +17,14 @@ class Aggregate1JDBCRepository(private val jdbcTemplate: JdbcTemplate) : Aggrega
     }
 
     override fun findAll(): List<Aggregate1> =
-        jdbcTemplate.query("select * from aggregate1") { rs, _ ->
-            rs.getAggregate1()
-        }
+        jdbcTemplate.query("select * from aggregate1", rowMapper)
 
-    override fun findById(id: Aggregate1Id) =
-        jdbcTemplate.query("select * from aggregate1 where id = ?", id.toUUID()) { rs, _ ->
-            rs.getAggregate1()
-        }.singleOrNull()
+    override fun findById(id: Aggregate1Id): Aggregate1? =
+        jdbcTemplate.query("select * from aggregate1 where id = ?", rowMapper, id.toUUID())
+            .singleOrNull()
 
-    private fun ResultSet.getAggregate1() = Aggregate1.fromSnapshot(getSnapshot())
+    private val rowMapper = { rs: ResultSet, _: Int -> Aggregate1.fromSnapshot(rs.getSnapshot()) }
+
     private fun ResultSet.getSnapshot() = Aggregate1Snapshot(getId(), getField1())
     private fun ResultSet.getId() = Aggregate1Id(getObject("id", UUID::class.java))
     private fun ResultSet.getField1() = ValueObject1(getString("field1"))
