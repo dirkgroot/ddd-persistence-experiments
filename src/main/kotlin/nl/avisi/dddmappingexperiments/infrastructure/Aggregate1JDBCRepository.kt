@@ -19,17 +19,16 @@ class Aggregate1JDBCRepository(private val jdbcTemplate: JdbcTemplate) : Aggrega
 
     override fun findAll(): List<Aggregate1> =
         jdbcTemplate.query("select * from aggregate1") { rs, _ ->
-            rs.createSnapshot()
-        }.map { Aggregate1.fromSnapshot(it) }
+            rs.getAggregate1()
+        }
 
     override fun findById(id: Aggregate1Id) =
         jdbcTemplate.query("select * from aggregate1 where id = ?", id.toUUID()) { rs, _ ->
-            rs.createSnapshot()
-        }.singleOrNull()?.let { Aggregate1.fromSnapshot(it) }
+            rs.getAggregate1()
+        }.singleOrNull()
 
-    private fun ResultSet.createSnapshot() =
-        Aggregate1Snapshot(
-            Aggregate1Id(getObject("id", UUID::class.java)),
-            ValueObject1(getString("field1"))
-        )
+    private fun ResultSet.getAggregate1() = Aggregate1.fromSnapshot(getSnapshot())
+    private fun ResultSet.getSnapshot() = Aggregate1Snapshot(getId(), getField1())
+    private fun ResultSet.getId() = Aggregate1Id(getObject("id", UUID::class.java))
+    private fun ResultSet.getField1() = ValueObject1(getString("field1"))
 }
