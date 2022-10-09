@@ -4,12 +4,16 @@ import nl.avisi.dddmappingexperiments.domain.StateSnapshotable
 
 class Aggregate1 : StateSnapshotable<Aggregate1Snapshot> {
     private val id: Aggregate1Id
-    private var field1: ValueObject1 = ValueObject1("Hello")
+    private var field1: ValueObject1
 
-    constructor() : this(Aggregate1Id.createNew())
+    constructor() {
+        id = Aggregate1Id.createNew()
+        field1 = ValueObject1("Hello")
+    }
 
-    private constructor(id: Aggregate1Id) {
-        this.id = id
+    private constructor(snapshot: Aggregate1Snapshot) {
+        id = snapshot.id
+        field1 = snapshot.field1
     }
 
     fun someCommand() {
@@ -18,13 +22,7 @@ class Aggregate1 : StateSnapshotable<Aggregate1Snapshot> {
 
     override fun takeSnapshot() = Aggregate1Snapshot(id, field1)
 
-    override fun loadSnapshot(snapshot: Aggregate1Snapshot) {
-        require(snapshot.id == id) { "Cannot load a snapshot of another entity" }
-        field1 = snapshot.field1
-    }
-
     companion object {
-        fun fromSnapshot(snapshot: Aggregate1Snapshot) = Aggregate1(snapshot.id)
-            .apply { loadSnapshot(snapshot) }
+        fun fromSnapshot(snapshot: Aggregate1Snapshot) = Aggregate1(snapshot)
     }
 }
